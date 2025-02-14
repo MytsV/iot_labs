@@ -36,9 +36,12 @@ class FileDatasource:
         acc_row = next(self.acc_reader, None)
         gps_row = next(self.gps_reader, None)
 
-        if acc_row is None or gps_row is None:
-            self._rewind_files()
+        if acc_row is None:
+            self._rewind_acc_file()
             acc_row = next(self.acc_reader)
+
+        if gps_row is None:
+            self._rewind_gps_file()
             gps_row = next(self.gps_reader)
 
         acc_data = Accelerometer(
@@ -80,13 +83,16 @@ class FileDatasource:
             self.gps_file = None
             self.gps_reader = None
 
-    def _rewind_files(self):
-        """Скидання потоків файлів на початок для реалізації нескінченного читання"""
-        if self.acc_file and self.gps_file:
+    def _rewind_acc_file(self):
+        """Скидання потоку файлу акселерометра на початок для реалізації нескінченного читання"""
+        if self.acc_file:
             self.acc_file.seek(0)
-            self.gps_file.seek(0)
-
             self.acc_reader = csv.DictReader(self.acc_file)
+
+    def _rewind_gps_file(self):
+        """Скидання потоку файлу GPS на початок для реалізації нескінченного читання"""
+        if self.gps_file:
+            self.gps_file.seek(0)
             self.gps_reader = csv.DictReader(self.gps_file)
 
     def __del__(self):
