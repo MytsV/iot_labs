@@ -1,14 +1,15 @@
 import csv
 from datetime import datetime
-from typing import Optional, TextIO
+from typing import Optional, TextIO, List
 
 from domain.accelerometer import Accelerometer
+from domain.air_quality import AirQuality
 from domain.gps import Gps
-from domain.aggregated_data import AggregatedData
+from domain.aggregated_agent_data import AggregatedAgentData
 import config
 
 
-class FileDatasource:
+class AgentFileDatasource:
     def __init__(
         self,
         accelerometer_filename: str,
@@ -25,7 +26,7 @@ class FileDatasource:
         self.acc_reader: Optional[csv.DictReader] = None
         self.gps_reader: Optional[csv.DictReader] = None
 
-    def read(self) -> AggregatedData:
+    def read(self) -> AggregatedAgentData:
         """Метод повертає дані отримані з датчиків"""
         if not self.is_reading:
             raise RuntimeError("startReading() must be called before reading data")
@@ -52,7 +53,7 @@ class FileDatasource:
             longitude=float(gps_row["longitude"]), latitude=float(gps_row["latitude"])
         )
 
-        return AggregatedData(
+        return AggregatedAgentData(
             accelerometer=acc_data,
             gps=gps_data,
             timestamp=datetime.now(),
@@ -97,4 +98,73 @@ class FileDatasource:
 
     def __del__(self):
         """Деструктор для закриття файлів"""
+        self.stopReading()
+
+
+class AirQualityFileDatasource:
+    def __init__(self, filename: str, batch_size: int = 5) -> None:
+        self.air_quality_filename = filename
+
+        self.batch_size = batch_size
+        self.is_reading = False
+
+        self.file: Optional[TextIO] = None
+        self.reader: Optional[csv.DictReader] = None
+
+    def read(self) -> List[AirQuality]:
+        """Метод повертає пакет даних про якість повітря"""
+        if not self.is_reading:
+            raise RuntimeError("startReading() must be called before reading data")
+
+        if not self.reader:
+            raise RuntimeError("File reader not initialized")
+
+        batch_data = []
+
+        # Читаємо batch_size рядків
+        for _ in range(self.batch_size):
+            row = next(self.reader, None)
+
+            if row is None:
+                self._rewind_file()
+                row = next(self.reader)
+
+            air_quality = AirQuality(
+                pm25=float(row["pm25"]),
+                pm10=float(row["pm10"]),
+                aqi=int(row["aqi"]),
+                gps=Gps(
+                    longitude=float(row["longitude"]), latitude=float(row["latitude"])
+                ),
+                humidity=float(row["humidity"]),
+                temperature=float(row["temperature"]),
+                timestamp=datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S"),
+            )
+
+            batch_data.append(air_quality)
+
+        return batch_data
+
+    def startReading(self, *args, **kwargs):
+        """Метод повинен викликатись перед початком читання даних"""
+        self.file = open(self.air_quality_filename, "r")
+        self.reader = csv.DictReader(self.file)
+        self.is_reading = True
+
+    def stopReading(self, *args, **kwargs):
+        """Метод повинен викликатись для закінчення читання даних"""
+        self.is_reading = False
+        if self.file:
+            self.file.close()
+            self.file = None
+            self.reader = None
+
+    def _rewind_file(self):
+        """Скидання потоку файлу на початок для реалізації нескінченного читання"""
+        if self.file:
+            self.file.seek(0)
+            self.reader = csv.DictReader(self.file)
+
+    def __del__(self):
+        """Деструктор для закриття файлу"""
         self.stopReading()

@@ -3,7 +3,7 @@ from schema.accelerometer_schema import AccelerometerSchema
 from schema.gps_schema import GpsSchema
 
 
-class AggregatedDataSchema(Schema):
+class AggregatedAgentDataSchema(Schema):
     accelerometer = fields.Nested(AccelerometerSchema)
     gps = fields.Nested(GpsSchema)
     timestamp = fields.DateTime("iso")

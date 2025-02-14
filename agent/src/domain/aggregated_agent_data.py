@@ -6,7 +6,7 @@ from domain.gps import Gps
 
 
 @dataclass
-class AggregatedData:
+class AggregatedAgentData:
     accelerometer: Accelerometer
     gps: Gps
     timestamp: datetime
