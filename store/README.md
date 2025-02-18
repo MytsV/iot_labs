@@ -3,7 +3,7 @@
 To start the Store, follow these steps:
 1. Clone the repository to your local machine:
 ```bash
-git clone https://github.com/Toolf/store.git
+https://github.com/MytsV/iot_labs/tree/lab2
 cd store
 ```
 2. Create and activate a virtual environment (optional but recommended):
@@ -17,7 +17,8 @@ pip install -r requirements.txt
 ```
 4. Run the system:
 ```bash
-python ./main.py
+cd docker
+docker-compose up --build
 ```
 ## Common Commands
 ### 1. Saving Requirements
