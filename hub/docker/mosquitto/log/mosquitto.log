@@ -1,0 +1,24 @@
+1739874955: mosquitto version 2.0.20 starting
+1739874955: Config loaded from /mosquitto/config/mosquitto.conf.
+1739874955: Opening ipv4 listen socket on port 1883.
+1739874955: Opening ipv6 listen socket on port 1883.
+1739874955: mosquitto version 2.0.20 running
+1739875778: New connection from 172.18.0.1:52966 on port 1883.
+1739875778: New connection from 172.18.0.1:52950 on port 1883.
+1739875778: Client <unknown> disconnected due to protocol error.
+1739875779: Client <unknown> disconnected due to protocol error.
+1739875779: New connection from 172.18.0.1:52982 on port 1883.
+1739875779: Client <unknown> disconnected due to protocol error.
+1739875779: New connection from 172.18.0.1:52996 on port 1883.
+1739875779: Client <unknown> disconnected due to protocol error.
+1739875779: New connection from 172.18.0.1:53006 on port 1883.
+1739875779: Client <unknown> disconnected due to protocol error.
+1739875779: New connection from 172.18.0.1:53022 on port 1883.
+1739875782: Client <unknown> closed its connection.
+1739876066: New connection from 172.18.0.1:36280 on port 1883.
+1739876066: New client connected from 172.18.0.1:36280 as mqtt-explorer-780aa404 (p2, c1, k60, u'mqtt-explorer').
+1739876574: Client mqtt-explorer-780aa404 disconnected.
+1739876756: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1739878557: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1739879798: mosquitto version 2.0.20 terminating
+1739879798: Saving in-memory database to /mosquitto/data//mosquitto.db.
