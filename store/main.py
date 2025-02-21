@@ -29,6 +29,7 @@ from config import (
 import models
 from models.modelsDB import ProcessedAgentDataInDB
 from models.modelsFastAPI import ProcessedAgentData
+import random
 
 DATABASE_URL = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 engine = create_engine(DATABASE_URL)
@@ -56,20 +57,50 @@ app = FastAPI()
 subscriptions: Set[WebSocket] = set()
 
 # FastAPI WebSocket endpoint
+import random
+
 @app.websocket("/ws/")
 async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket API for sending random data (because DB is empty for now)"""
     await websocket.accept()
     subscriptions.add(websocket)
     try:
+        latitude = 50.4501  # Kyiv
+        longitude = 30.5234
         while True:
-            await websocket.receive_text()
+            latitude += random.uniform(-0.0002, 0.0002)
+            longitude += random.uniform(-0.0002, 0.0002)
+
+            road_state = random.choices(
+                ["normal", "pothole", "bump"], 
+                weights=[0.7, 0.2, 0.1]  
+            )[0]
+
+            data = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "road_state": road_state
+            }
+
+            print(f"Sending data: {data}")  
+            await send_data_to_subscribers(data)
+            await asyncio.sleep(1)  
     except WebSocketDisconnect:
         subscriptions.remove(websocket)
 
-# Function to send data to subscribed users
+
+
 async def send_data_to_subscribers(data):
+    """Sending data to all subscribed clients"""
+    disconnected_clients = []
     for websocket in subscriptions:
-        await websocket.send_json(json.dumps(data))
+        try:
+            await websocket.send_json(data)
+        except WebSocketDisconnect:
+            disconnected_clients.append(websocket)
+
+    for websocket in disconnected_clients:
+        subscriptions.remove(websocket)
 
 
 # FastAPI CRUDL endpoints
