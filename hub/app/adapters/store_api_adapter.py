@@ -23,10 +23,13 @@ class StoreApiAdapter(StoreGateway):
         """
         # Implement it
         url = f"{self.api_base_url}/processed_agent_data/"
-        data = [processed_agent_data.model_dump_json() for processed_agent_data in processed_agent_data_batch]
+        json_strings = [item.model_dump_json() for item in processed_agent_data_batch]
+        data = f'[{",".join(json_strings)}]'
+
         headers = {'Content-Type': 'application/json'}
+
         try:
-            with requests.post(url, data=json.dumps(data), headers=headers) as response:
+            with requests.post(url, data=data, headers=headers) as response:
                 if response.status_code != 200:
                     logging.error(f"Invalid Hub response\nData: {data}\nResponse: {response}")
                     return False
