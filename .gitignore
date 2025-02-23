@@ -106,5 +106,5 @@ ENV/
 *.logs
 .gradle/
 
-edge/docker/mosquitto/data
-edge/docker/mosquitto/log
+**/mosquitto/data
+**/mosquitto/log
