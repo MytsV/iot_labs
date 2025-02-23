@@ -12,4 +12,10 @@ def process_agent_data(
     Returns:
         processed_data_batch (ProcessedAgentData): Processed data containing the classified state of the road surface and agent data.
     """
-    # Implement it
+
+    processed_data = ProcessedAgentData(
+        road_state="default",
+        agent_data=agent_data
+    )
+    
+    return processed_data
