@@ -3,7 +3,7 @@
 To start the Hub, follow these steps:
 1. Clone the repository to your local machine:
 ```bash
-git clone https://github.com/Toolf/hub.git
+git clone https://github.com/MytsV/iot_labs/tree/lab3/hub
 cd hub
 ```
 2. Create and activate a virtual environment (optional but recommended):
