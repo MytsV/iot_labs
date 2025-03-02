@@ -32,9 +32,8 @@ class ProcessedAgentData(BaseModel):
 
 
 class Datasource:
-    def __init__(self, user_id: int):
+    def __init__(self):
         self.index = 0
-        self.user_id = user_id
         self.connection_status = None
         self._new_points = []
         asyncio.ensure_future(self.connect_to_server())
@@ -46,19 +45,22 @@ class Datasource:
         return points
 
     async def connect_to_server(self):
-        uri = f"ws://{STORE_HOST}:{STORE_PORT}/ws/{self.user_id}"
-        while True:
-            Logger.debug("CONNECT TO SERVER")
+        uri = f"ws://{STORE_HOST}:{STORE_PORT}/ws/"
+        print(f"Connected to WebSocket: {uri}")
+        try:
             async with websockets.connect(uri) as websocket:
-                self.connection_status = "Connected"
-                try:
-                    while True:
-                        data = await websocket.recv()
-                        parsed_data = json.loads(data)
-                        self.handle_received_data(parsed_data)
-                except websockets.ConnectionClosedOK:
-                    self.connection_status = "Disconnected"
-                    Logger.debug("SERVER DISCONNECT")
+                print("WebSocket connected!")
+                while True:
+                    data = await websocket.recv()
+                    parsed_data = json.loads(data)
+                    print(f"Receiving data: {parsed_data}")
+                    self._new_points.append((
+                        parsed_data["latitude"], 
+                        parsed_data["longitude"], 
+                        parsed_data["road_state"]
+                    ))
+        except Exception as e:
+            print(f"Error WebSocket: {e}")
 
     def handle_received_data(self, data):
         # Update your UI or perform actions with received data here
