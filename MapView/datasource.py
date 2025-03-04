@@ -46,21 +46,21 @@ class Datasource:
 
     async def connect_to_server(self):
         uri = f"ws://{STORE_HOST}:{STORE_PORT}/ws/"
-        print(f"Connected to WebSocket: {uri}")
         try:
             async with websockets.connect(uri) as websocket:
-                print("WebSocket connected!")
                 while True:
                     data = await websocket.recv()
                     parsed_data = json.loads(data)
-                    print(f"Receiving data: {parsed_data}")
+                    if not parsed_data:
+                        continue
+
                     self._new_points.append((
-                        parsed_data["latitude"], 
-                        parsed_data["longitude"], 
+                        parsed_data["latitude"],
+                        parsed_data["longitude"],
                         parsed_data["road_state"]
                     ))
         except Exception as e:
-            print(f"Error WebSocket: {e}")
+            print(e)
 
     def handle_received_data(self, data):
         # Update your UI or perform actions with received data here

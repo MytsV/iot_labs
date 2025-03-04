@@ -59,35 +59,37 @@ subscriptions: Set[WebSocket] = set()
 # FastAPI WebSocket endpoint
 import random
 
+
 @app.websocket("/ws/")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket API for sending random data (because DB is empty for now)"""
     await websocket.accept()
     subscriptions.add(websocket)
+
     try:
-        latitude = 50.4501  # Kyiv
-        longitude = 30.5234
         while True:
-            latitude += random.uniform(-0.0002, 0.0002)
-            longitude += random.uniform(-0.0002, 0.0002)
+            with SessionLocal() as session:
+                query = select(
+                    processed_agent_data.c.latitude,
+                    processed_agent_data.c.longitude,
+                    processed_agent_data.c.road_state
+                ).order_by(processed_agent_data.c.timestamp.desc()).limit(1)
 
-            road_state = random.choices(
-                ["normal", "pothole", "bump"], 
-                weights=[0.7, 0.2, 0.1]  
-            )[0]
+                result = session.execute(query).fetchone()
+            if result:
+                latitude, longitude, road_state = result
+                if road_state is None:
+                    road_state = "normal"
 
-            data = {
-                "latitude": latitude,
-                "longitude": longitude,
-                "road_state": road_state
-            }
+                data = {
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "road_state": road_state
+                }
+                await send_data_to_subscribers(data)
+            await asyncio.sleep(1)
 
-            print(f"Sending data: {data}")  
-            await send_data_to_subscribers(data)
-            await asyncio.sleep(1)  
     except WebSocketDisconnect:
         subscriptions.remove(websocket)
-
 
 
 async def send_data_to_subscribers(data):
