@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class ProcessedAgentDataInDB(BaseModel):
     id: int
     road_state: str
+    user_id: int
     x: float
     y: float
     z: float

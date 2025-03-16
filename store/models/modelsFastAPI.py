@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 # FastAPI models
-class AccelerometerData(BaseModel):
+class GyroscopeData(BaseModel):
     x: float
     y: float
     z: float
@@ -13,7 +13,8 @@ class GpsData(BaseModel):
     longitude: float
 
 class AgentData(BaseModel):
-    accelerometer: AccelerometerData
+    user_id: int
+    gyroscope: GyroscopeData
     gps: GpsData
     timestamp: datetime
 

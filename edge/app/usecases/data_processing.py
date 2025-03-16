@@ -1,10 +1,11 @@
 from collections import deque
 from app.entities.agent_data import AgentData
-from app.entities.processed_agent_data import ProcessedAgentData
+from app.entities.processed_agent_data import ProcessedAgentData, ExtendedAgentData, GpsData
 
 z_history = deque(maxlen=5)
 THRESHOLD_POTHOLE = 1000
 THRESHOLD_BUMP = 800
+
 
 def process_agent_data(
     agent_data: AgentData,
@@ -12,12 +13,12 @@ def process_agent_data(
     """
     Process agent data and classify the state of the road surface.
     Parameters:
-        agent_data (AgentData): Agent data that containing accelerometer, GPS, and timestamp.
+        agent_data (AgentData): Agent data that containing gyroscope, GPS, and timestamp.
     Returns:
         processed_data_batch (ProcessedAgentData): Processed data containing the classified state of the road surface and agent data.
     """
 
-    z_value = agent_data.accelerometer.z
+    z_value = agent_data.gyroscope.z
     prev_z = z_history[-1] if z_history else z_value
 
     z_history.append(z_value)
@@ -34,9 +35,17 @@ def process_agent_data(
     else:
         road_state = "normal"
 
+    extended_agent_data = ExtendedAgentData(
+        **agent_data.dict(),
+        gps=GpsData(
+            latitude=42,
+            longitude=42,
+        )
+    )
+
     processed_data = ProcessedAgentData(
         road_state=road_state,
-        agent_data=agent_data
+        agent_data=extended_agent_data
     )
 
     return processed_data

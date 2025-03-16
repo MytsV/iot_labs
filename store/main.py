@@ -40,6 +40,7 @@ processed_agent_data = Table(
     metadata,
 Column("id", Integer, primary_key=True, index=True),
     Column("road_state", String),
+    Column("user_id", Integer),
     Column("x", Float),
     Column("y", Float),
     Column("z", Float),
@@ -115,9 +116,10 @@ async def create_processed_agent_data(data: List[ProcessedAgentData]):
         for item in data:
             query = processed_agent_data.insert().values(
                 road_state=item.road_state,
-                x=item.agent_data.accelerometer.x,
-                y=item.agent_data.accelerometer.y,
-                z=item.agent_data.accelerometer.z,
+                user_id=item.agent_data.user_id,
+                x=item.agent_data.gyroscope.x,
+                y=item.agent_data.gyroscope.y,
+                z=item.agent_data.gyroscope.z,
                 latitude=item.agent_data.gps.latitude,
                 longitude=item.agent_data.gps.longitude,
                 timestamp=item.agent_data.timestamp,
@@ -191,9 +193,10 @@ def update_processed_agent_data(processed_agent_data_id: int, data: ProcessedAge
             processed_agent_data.c.id == processed_agent_data_id
         ).values(
             road_state=data.road_state,
-            x=data.agent_data.accelerometer.x,
-            y=data.agent_data.accelerometer.y,
-            z=data.agent_data.accelerometer.z,
+            user_id=data.agent_data.user_id,
+            x=data.agent_data.gyroscope.x,
+            y=data.agent_data.gyroscope.y,
+            z=data.agent_data.gyroscope.z,
             latitude=data.agent_data.gps.latitude,
             longitude=data.agent_data.gps.longitude,
             timestamp=data.agent_data.timestamp,

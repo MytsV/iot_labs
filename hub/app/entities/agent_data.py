@@ -2,20 +2,15 @@ from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 
-class AccelerometerData(BaseModel):
+class GyroscopeData(BaseModel):
     x: float
     y: float
     z: float
 
 
-class GpsData(BaseModel):
-    latitude: float
-    longitude: float
-
-
 class AgentData(BaseModel):
-    accelerometer: AccelerometerData
-    gps: GpsData
+    user_id: int
+    gyroscope: GyroscopeData
     timestamp: datetime
 
     @classmethod
