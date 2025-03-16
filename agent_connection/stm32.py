@@ -1,10 +1,16 @@
+import os
+
 import serial
 import paho.mqtt.client as mqtt
 import json
 import datetime
 
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MQTT_BROKER = os.environ.get("MQTT_BROKER") or "localhost"
+MQTT_PORT = int(os.environ.get("MQTT_PORT")) or 1883
 MQTT_TOPIC = "agent_data_topic"
 
 SERIAL_PORT = "/dev/ttyACM0"
