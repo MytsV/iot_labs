@@ -1,7 +1,7 @@
 from marshmallow import Schema, fields
 
 
-class AccelerometerSchema(Schema):
+class GyroscopeSchema(Schema):
     x = fields.Int()
     y = fields.Int()
     z = fields.Int()

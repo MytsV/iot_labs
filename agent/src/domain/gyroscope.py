@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Accelerometer:
+class Gyroscope:
     x: int
     y: int
     z: int

@@ -1,9 +1,14 @@
 import logging
 import paho.mqtt.client as mqtt
 from app.interfaces.agent_gateway import AgentGateway
-from app.entities.agent_data import AgentData, GpsData
+from app.entities.agent_data import AgentData
 from app.usecases.data_processing import process_agent_data
 from app.interfaces.hub_gateway import HubGateway
+from app.usecases.data_processing import RoadEventDetector
+from app.usecases.gps_movement_simulator import GpsMovementSimulator
+
+detector = RoadEventDetector()
+gps_simulator = GpsMovementSimulator()
 
 
 class AgentMQTTAdapter(AgentGateway):
@@ -38,7 +43,7 @@ class AgentMQTTAdapter(AgentGateway):
             # Create AgentData instance with the received data
             agent_data = AgentData.model_validate_json(payload, strict=True)
             # Process the received data (you can call a use case here if needed)
-            processed_data = process_agent_data(agent_data)
+            processed_data = process_agent_data(agent_data, detector, gps_simulator)
             # Store the agent_data in the database (you can send it to the data processing module)
             if not self.hub_gateway.save_data(processed_data):
                 logging.error("Hub is not available")

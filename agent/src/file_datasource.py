@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 from typing import Optional, TextIO
 
-from domain.accelerometer import Accelerometer
+from domain.gyroscope import Gyroscope
 from domain.gps import Gps
 from domain.aggregated_data import AggregatedData
 import config
@@ -11,18 +11,18 @@ import config
 class FileDatasource:
     def __init__(
         self,
-        accelerometer_filename: str,
+        gyroscope_filename: str,
         gps_filename: str,
     ) -> None:
-        self.accelerometer_filename = accelerometer_filename
+        self.gyroscope_filename = gyroscope_filename
         self.gps_filename = gps_filename
 
         self.is_reading = False
 
-        self.acc_file: Optional[TextIO] = None
+        self.gyro_file: Optional[TextIO] = None
         self.gps_file: Optional[TextIO] = None
 
-        self.acc_reader: Optional[csv.DictReader] = None
+        self.gyro_reader: Optional[csv.DictReader] = None
         self.gps_reader: Optional[csv.DictReader] = None
 
     def read(self) -> AggregatedData:
@@ -30,22 +30,22 @@ class FileDatasource:
         if not self.is_reading:
             raise RuntimeError("startReading() must be called before reading data")
 
-        if not self.acc_reader or not self.gps_reader:
+        if not self.gyro_reader or not self.gps_reader:
             raise RuntimeError("File readers not initialized")
 
-        acc_row = next(self.acc_reader, None)
+        gyro_row = next(self.gyro_reader, None)
         gps_row = next(self.gps_reader, None)
 
-        if acc_row is None:
+        if gyro_row is None:
             self._rewind_acc_file()
-            acc_row = next(self.acc_reader)
+            gyro_row = next(self.gyro_reader)
 
         if gps_row is None:
             self._rewind_gps_file()
             gps_row = next(self.gps_reader)
 
-        acc_data = Accelerometer(
-            x=int(acc_row["x"]), y=int(acc_row["y"]), z=int(acc_row["z"])
+        gyro_data = Gyroscope(
+            x=int(gyro_row["x"]), y=int(gyro_row["y"]), z=int(gyro_row["z"])
         )
 
         gps_data = Gps(
@@ -53,7 +53,7 @@ class FileDatasource:
         )
 
         return AggregatedData(
-            accelerometer=acc_data,
+            gyroscope=gyro_data,
             gps=gps_data,
             timestamp=datetime.now(),
             user_id=config.USER_ID,
@@ -61,10 +61,10 @@ class FileDatasource:
 
     def startReading(self, *args, **kwargs):
         """Метод повинен викликатись перед початком читання даних"""
-        self.acc_file = open(self.accelerometer_filename, "r")
+        self.gyro_file = open(self.gyroscope_filename, "r")
         self.gps_file = open(self.gps_filename, "r")
 
-        self.acc_reader = csv.DictReader(self.acc_file)
+        self.gyro_reader = csv.DictReader(self.gyro_file)
         self.gps_reader = csv.DictReader(self.gps_file)
 
         self.is_reading = True
@@ -73,10 +73,10 @@ class FileDatasource:
         """Метод повинен викликатись для закінчення читання даних"""
         self.is_reading = False
 
-        if self.acc_file:
-            self.acc_file.close()
-            self.acc_file = None
-            self.acc_reader = None
+        if self.gyro_file:
+            self.gyro_file.close()
+            self.gyro_file = None
+            self.gyro_reader = None
 
         if self.gps_file:
             self.gps_file.close()
@@ -85,9 +85,9 @@ class FileDatasource:
 
     def _rewind_acc_file(self):
         """Скидання потоку файлу акселерометра на початок для реалізації нескінченного читання"""
-        if self.acc_file:
-            self.acc_file.seek(0)
-            self.acc_reader = csv.DictReader(self.acc_file)
+        if self.gyro_file:
+            self.gyro_file.seek(0)
+            self.gyro_reader = csv.DictReader(self.gyro_file)
 
     def _rewind_gps_file(self):
         """Скидання потоку файлу GPS на початок для реалізації нескінченного читання"""

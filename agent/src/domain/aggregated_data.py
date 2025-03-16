@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
 from datetime import datetime
-from domain.accelerometer import Accelerometer
+from domain.gyroscope import Gyroscope
 from domain.gps import Gps
 
 
 @dataclass
 class AggregatedData:
-    accelerometer: Accelerometer
+    gyroscope: Gyroscope
     gps: Gps
     timestamp: datetime
     user_id: int

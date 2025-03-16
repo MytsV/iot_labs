@@ -12,7 +12,7 @@ from sqlalchemy import (
     Integer,
     String,
     Float,
-    DateTime,
+    DateTime, and_,
 )
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, delete, update
@@ -40,6 +40,7 @@ processed_agent_data = Table(
     metadata,
 Column("id", Integer, primary_key=True, index=True),
     Column("road_state", String),
+    Column("user_id", Integer),
     Column("x", Float),
     Column("y", Float),
     Column("z", Float),
@@ -64,19 +65,23 @@ import random
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     subscriptions.add(websocket)
+    last_sent_timestamp = None
+
+    session = SessionLocal()
 
     try:
         while True:
-            with SessionLocal() as session:
-                query = select(
-                    processed_agent_data.c.latitude,
-                    processed_agent_data.c.longitude,
-                    processed_agent_data.c.road_state
-                ).order_by(processed_agent_data.c.timestamp.desc()).limit(1)
+            query = select(
+                processed_agent_data.c.latitude,
+                processed_agent_data.c.longitude,
+                processed_agent_data.c.road_state,
+                processed_agent_data.c.timestamp
+            ).order_by(processed_agent_data.c.timestamp.desc()).limit(1)
 
-                result = session.execute(query).fetchone()
+            result = session.execute(query).fetchone()
+
             if result:
-                latitude, longitude, road_state = result
+                latitude, longitude, road_state, timestamp = result
                 if road_state is None:
                     road_state = "normal"
 
@@ -85,11 +90,41 @@ async def websocket_endpoint(websocket: WebSocket):
                     "longitude": longitude,
                     "road_state": road_state
                 }
+
+                if last_sent_timestamp:
+                    abnormal_query = select(
+                        processed_agent_data.c.latitude,
+                        processed_agent_data.c.longitude,
+                        processed_agent_data.c.road_state
+                    ).where(
+                        and_(
+                            processed_agent_data.c.timestamp > last_sent_timestamp,
+                            processed_agent_data.c.timestamp < timestamp,
+                            processed_agent_data.c.road_state != "normal",
+                            processed_agent_data.c.road_state.is_not(None)
+                        )
+                    ).order_by(processed_agent_data.c.timestamp.asc())
+
+                    abnormal_results = session.execute(abnormal_query).fetchall()
+
+                    for abnormal in abnormal_results:
+                        abn_lat, abn_lon, abn_state = abnormal
+                        abnormal_data = {
+                            "latitude": abn_lat,
+                            "longitude": abn_lon,
+                            "road_state": abn_state,
+                        }
+                        await send_data_to_subscribers(abnormal_data)
+
+                last_sent_timestamp = timestamp
                 await send_data_to_subscribers(data)
-            await asyncio.sleep(1)
+
+            await asyncio.sleep(0.5)
 
     except WebSocketDisconnect:
         subscriptions.remove(websocket)
+    finally:
+        session.close()
 
 
 async def send_data_to_subscribers(data):
@@ -115,9 +150,10 @@ async def create_processed_agent_data(data: List[ProcessedAgentData]):
         for item in data:
             query = processed_agent_data.insert().values(
                 road_state=item.road_state,
-                x=item.agent_data.accelerometer.x,
-                y=item.agent_data.accelerometer.y,
-                z=item.agent_data.accelerometer.z,
+                user_id=item.agent_data.user_id,
+                x=item.agent_data.gyroscope.x,
+                y=item.agent_data.gyroscope.y,
+                z=item.agent_data.gyroscope.z,
                 latitude=item.agent_data.gps.latitude,
                 longitude=item.agent_data.gps.longitude,
                 timestamp=item.agent_data.timestamp,
@@ -191,9 +227,10 @@ def update_processed_agent_data(processed_agent_data_id: int, data: ProcessedAge
             processed_agent_data.c.id == processed_agent_data_id
         ).values(
             road_state=data.road_state,
-            x=data.agent_data.accelerometer.x,
-            y=data.agent_data.accelerometer.y,
-            z=data.agent_data.accelerometer.z,
+            user_id=data.agent_data.user_id,
+            x=data.agent_data.gyroscope.x,
+            y=data.agent_data.gyroscope.y,
+            z=data.agent_data.gyroscope.z,
             latitude=data.agent_data.gps.latitude,
             longitude=data.agent_data.gps.longitude,
             timestamp=data.agent_data.timestamp,

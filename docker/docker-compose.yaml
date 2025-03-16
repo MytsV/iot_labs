@@ -11,7 +11,6 @@ services:
       - ./mosquitto/log:/mosquitto/log
     ports:
       - 1883:1883
-      - 9001:9001
     networks:
       mqtt_network:
 
@@ -26,40 +25,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/structure.sql:/docker-entrypoint-initdb.d/structure.sql
-    ports:
-      - "5432:5432"
     networks:
       db_network:
-
-
-  pgadmin:
-    container_name: pgadmin4
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: root
-      PGADMIN_LISTEN_PORT: 8000
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    ports:
-      - "5050:8000"
-    networks:
-      db_network:
-
 
   redis:
     image: redis:latest
     container_name: redis
-    ports:
-      - "6379:6379"
     networks:
       hub_redis:
 
-
   store:
     container_name: store
-    build: ../../store
+    build: ../store
     depends_on:
       - postgres_db
     restart: always
@@ -79,7 +56,7 @@ services:
 
   edge:
     container_name: edge
-    build: ../
+    build: ../edge
     depends_on:
       - mqtt
       - hub
@@ -99,7 +76,7 @@ services:
 
   hub:
     container_name: hub
-    build: ../../hub
+    build: ../hub
     depends_on:
       - mqtt
       - redis
@@ -118,20 +95,6 @@ services:
       mqtt_network:
       hub_store:
       hub_redis:
-
-#  fake_agent:
-#    container_name: agent
-#    build: ../../agent
-#    depends_on:
-#      - mqtt
-#    environment:
-#      MQTT_BROKER_HOST: "mqtt"
-#      MQTT_BROKER_PORT: 1883
-#      MQTT_TOPIC: "agent_data_topic"
-#      DELAY: 0.1
-#    networks:
-#      mqtt_network:
-
 
 networks:
   mqtt_network:
