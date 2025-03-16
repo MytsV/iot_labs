@@ -12,7 +12,7 @@ from sqlalchemy import (
     Integer,
     String,
     Float,
-    DateTime,
+    DateTime, and_,
 )
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select, delete, update
@@ -65,19 +65,23 @@ import random
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     subscriptions.add(websocket)
+    last_sent_timestamp = None
+
+    session = SessionLocal()
 
     try:
         while True:
-            with SessionLocal() as session:
-                query = select(
-                    processed_agent_data.c.latitude,
-                    processed_agent_data.c.longitude,
-                    processed_agent_data.c.road_state
-                ).order_by(processed_agent_data.c.timestamp.desc()).limit(1)
+            query = select(
+                processed_agent_data.c.latitude,
+                processed_agent_data.c.longitude,
+                processed_agent_data.c.road_state,
+                processed_agent_data.c.timestamp
+            ).order_by(processed_agent_data.c.timestamp.desc()).limit(1)
 
-                result = session.execute(query).fetchone()
+            result = session.execute(query).fetchone()
+
             if result:
-                latitude, longitude, road_state = result
+                latitude, longitude, road_state, timestamp = result
                 if road_state is None:
                     road_state = "normal"
 
@@ -86,11 +90,41 @@ async def websocket_endpoint(websocket: WebSocket):
                     "longitude": longitude,
                     "road_state": road_state
                 }
+
+                if last_sent_timestamp:
+                    abnormal_query = select(
+                        processed_agent_data.c.latitude,
+                        processed_agent_data.c.longitude,
+                        processed_agent_data.c.road_state
+                    ).where(
+                        and_(
+                            processed_agent_data.c.timestamp > last_sent_timestamp,
+                            processed_agent_data.c.timestamp < timestamp,
+                            processed_agent_data.c.road_state != "normal",
+                            processed_agent_data.c.road_state.is_not(None)
+                        )
+                    ).order_by(processed_agent_data.c.timestamp.asc())
+
+                    abnormal_results = session.execute(abnormal_query).fetchall()
+
+                    for abnormal in abnormal_results:
+                        abn_lat, abn_lon, abn_state = abnormal
+                        abnormal_data = {
+                            "latitude": abn_lat,
+                            "longitude": abn_lon,
+                            "road_state": abn_state,
+                        }
+                        await send_data_to_subscribers(abnormal_data)
+
+                last_sent_timestamp = timestamp
                 await send_data_to_subscribers(data)
-            await asyncio.sleep(1)
+
+            await asyncio.sleep(0.5)
 
     except WebSocketDisconnect:
         subscriptions.remove(websocket)
+    finally:
+        session.close()
 
 
 async def send_data_to_subscribers(data):

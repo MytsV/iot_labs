@@ -19,7 +19,7 @@ def process_agent_data(
         of the road surface and agent data.
     """
     z_value = agent_data.gyroscope.z
-    road_state, confidence = detector.process_reading(z_value)
+    road_state = detector.process_reading(agent_data.user_id, agent_data.timestamp, z_value)
 
     latitude, longitude = gps_simulator.update_position(
         user_id=agent_data.user_id,
@@ -38,7 +38,6 @@ def process_agent_data(
 
     processed_data = ProcessedAgentData(
         road_state=road_state,
-        confidence=confidence,  # Added confidence score
         agent_data=extended_agent_data
     )
 

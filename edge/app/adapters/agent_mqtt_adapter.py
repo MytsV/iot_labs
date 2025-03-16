@@ -7,7 +7,7 @@ from app.interfaces.hub_gateway import HubGateway
 from app.usecases.data_processing import RoadEventDetector
 from app.usecases.gps_movement_simulator import GpsMovementSimulator
 
-detector = RoadEventDetector(adaptive_thresholds=True)
+detector = RoadEventDetector()
 gps_simulator = GpsMovementSimulator()
 
 

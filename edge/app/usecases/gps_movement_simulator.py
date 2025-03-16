@@ -20,7 +20,7 @@ class GpsMovementSimulator:
         # Slight variations in speed
         self.speed_variation = 0.2  # 20% variation
         # Probability to change direction at any step
-        self.turn_probability = 0.1
+        self.turn_probability = 0.015
 
     def _initialize_user(self, user_id: str) -> None:
         """Initialize a new user with random starting position."""
